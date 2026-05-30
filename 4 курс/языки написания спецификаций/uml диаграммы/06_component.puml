@@ -1,0 +1,52 @@
+@startuml VKR_Deployment_Component
+!theme plain
+left to right direction
+
+actor "Telegram\nклиент" as TGClient
+actor "Браузер\nMini App" as Browser
+
+node "Хост приложения" {
+  [Telegram Bot\naiogram 3] as Bot
+  [HTTP + WebSocket\n/api/webapp] as WebSrv
+  [Статика фронтенда\nReact / Vite] as Spa
+  [Игровой движок\nи ночной резолвер] as Engine
+  [Hub / Session\nhandlers] as Hub
+}
+
+cloud "Внешние" {
+  [Telegram Bot API] as TelegramAPI
+  [LLM API\nOpenRouter и др.] as LLM
+}
+
+database "Redis" as Redis
+database "SQL\nPostgreSQL / SQLite" as SQL
+
+TGClient --> TelegramAPI
+Browser --> Spa
+Browser --> WebSrv
+Bot --> TelegramAPI
+Bot --> Engine
+Bot --> Hub
+WebSrv --> Hub
+WebSrv --> Engine
+Hub --> Redis
+Hub --> SQL
+Engine --> Redis
+Engine --> SQL
+Engine --> LLM
+
+note bottom of Spa
+  Фронтенд: basename /webapp/app,
+  маршруты match, session/*, profile.
+end note
+
+note bottom of Redis
+  Сессии партий, кэш лобби.
+end note
+
+note bottom of SQL
+  Игры, игроки, сообщения,
+  данные профиля (при наличии).
+end note
+
+@enduml

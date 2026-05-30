@@ -1,0 +1,113 @@
+@startuml VKR_Classes_MafiaBot
+!theme plain
+skinparam classAttributeIconSize 0
+
+package "Домен игры" {
+  enum Role <<enumeration>> {
+    DON
+    MAFIA
+    COMMISSIONER
+    DOCTOR
+    COURTESAN
+    MANIAC
+    CIVILIAN
+  }
+
+  class NightResult {
+    +deaths: list[int]
+    +survived_mafia: bool
+    +survived_maniac: bool
+    +commissioner_checks: dict
+    +events: list[str]
+  }
+
+  class NightResolver <<module>> {
+    +resolve_night(...) : NightResult
+    +check_win(alive) : str | None
+  }
+  NightResolver ..> NightResult : creates
+}
+
+package "Сессия (горячее состояние)" {
+  class SessionPlayer {
+    +user_id: int
+    +display_name: str
+    +role: str
+    +alive: bool
+    +is_ai: bool
+  }
+
+  class GameSessionState {
+    +game_id: str
+    +chat_id: int
+    +phase: str
+    +day_number: int
+    +players: SessionPlayer[]
+    +night_subphase: str
+    +votes: dict
+    --
+    +player_by_id(uid): SessionPlayer
+    +alive_map(): dict
+  }
+  GameSessionState *-- "many" SessionPlayer
+}
+
+package "Персистентность SQL" {
+  class Game {
+    +id: str
+    +chat_id: int
+    +status: str
+    +phase: str
+    +winner: str
+  }
+  class GamePlayer {
+    +user_id: int
+    +role: str
+    +alive: bool
+  }
+  class GameMessage {
+    +text: str
+    +day_number: int
+  }
+  Game "1" *-- "many" GamePlayer
+  Game "1" *-- "many" GameMessage
+}
+
+package "WebApp / HTTP слой" <<Rectangle>> {
+  class WebAppHandlers <<module>> {
+    +маршруты /api/webapp/*
+    +hub, session, profile, config
+  }
+  class HubService <<module>> {
+    +лобби, join, create
+  }
+  WebAppHandlers ..> HubService : использует
+}
+
+package "ИИ" {
+  interface LLMClient <<interface>> {
+    +complete_json(system, user): dict
+  }
+  class OpenRouterAdapter {
+    +api_key: str
+    +model: str
+  }
+  OpenRouterAdapter ..|> LLMClient
+}
+
+GameSessionState ..> Role : role strings
+GamePlayer ..> Role
+HubService ..> GameSessionState : чтение/запись\nчерез Redis
+
+note bottom of GameSessionState
+  Сериализация JSON в Redis
+  ключ mafia:session:{chat_id}
+end note
+
+note bottom of WebAppHandlers
+  Фронтенд: React (Vite), basename
+  /webapp/app — маршруты match,
+  session/*, profile, community.
+end note
+
+@enduml

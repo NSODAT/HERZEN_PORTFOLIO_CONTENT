@@ -1,0 +1,53 @@
+@startuml VKR_State_GameSession
+!theme plain
+left to right direction
+hide empty description
+
+skinparam shadowing true
+skinparam roundcorner 10
+skinparam defaultFontSize 11
+
+skinparam state {
+  BackgroundColor #ECEFF4
+  BorderColor #5E81AC
+  BorderThickness 1.2
+  FontColor #2E3440
+  ArrowColor #5E81AC
+}
+
+skinparam arrow {
+  Color #5E81AC
+  Thickness 1
+}
+
+[*] --> Lobby
+
+Lobby --> Night : /mafia_begin\n(≥7 игроков)\nили старт из WebApp
+
+state Night #D8DEE9 {
+  [*] --> NightSubphases
+  NightSubphases --> NightResolve : действия собраны
+  NightResolve --> [*] : рассвет
+}
+
+Night --> Day : phase=day\nпосле resolve_night\nи проверки победы
+
+state Day #D8DEE9 {
+  [*] --> Discussion
+  Discussion --> Vote : /mafia_vote\nили фаза в Mini App
+}
+
+Day --> Vote : голосование открыто
+
+state Vote #D8DEE9 {
+  [*] --> Collecting
+  Collecting --> Tally : подсчёт голосов
+}
+
+Vote --> Ended : есть победитель
+Vote --> Night : следующая ночь
+Day --> Ended : победа без голосования
+
+Ended --> [*]
+
+@enduml

@@ -1,0 +1,6 @@
+лр1: https://github.com/NSODAT/LR1_PROG
+лр2: https://github.com/NSODAT/LR2_PROG
+лр4: https://github.com/NSODAT/LR4
+лр5: https://github.com/NSODAT/LR5
+лр6: https://github.com/NSODAT/LR6
+лр7:https://github.com/NSODAT/LR7

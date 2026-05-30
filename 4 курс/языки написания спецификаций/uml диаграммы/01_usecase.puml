@@ -1,0 +1,65 @@
+@startuml VKR_UseCase_MafiaBot
+!theme plain
+skinparam actorStyle awesome
+left to right direction
+
+actor "Игрок\n(человек)" as Player
+actor "Организатор\nлобби" as Org
+actor "ИИ-игрок" as AI
+actor "Администратор\nчата" as Admin
+actor "Пользователь\nMini App" as WebUser
+
+rectangle "Telegram-бот «Мафия»" {
+  usecase "Вступить в лобби\n/mafia_join" as UC_Join
+  usecase "Создать лобби\n/mafia_new" as UC_New
+  usecase "Начать игру\n/mafia_begin" as UC_Begin
+  usecase "Получить роль в ЛС\n/start" as UC_Role
+  usecase "Ночное действие\n(кнопки / цель)" as UC_Night
+  usecase "Голосование днём\n/mafia_vote" as UC_Vote
+  usecase "Сводка реплик\n/mafia_summary" as UC_Sum
+  usecase "Отмена лобби\n/mafia_cancel" as UC_Cancel
+  usecase "Логирование сообщений\nв БД" as UC_Log
+  usecase "ИИ: выбор цели\n(LLM)" as UC_AI
+  usecase "Состояние партии\n(Redis)" as UC_Redis
+}
+
+rectangle "Telegram Mini App\n(React / WebApp)" {
+  usecase "Матчмейкинг, лобби,\nпрофиль, рейтинг" as UC_WebHub
+  usecase "Сессия игры\n(live, фазы,\nWebSocket)" as UC_WebSession
+  usecase "Конфигуратор стола\n(большой экран)" as UC_WebConfig
+}
+
+Org --> UC_New
+Org --> UC_Begin
+Org --> UC_Cancel
+Player --> UC_Join
+Player --> UC_Role
+Player --> UC_Night
+Player --> UC_Vote
+Player --> UC_Sum
+AI --> UC_Night
+AI --> UC_AI
+UC_AI ..> UC_Night : <<include>>
+UC_Log ..> UC_Vote : <<extend>>
+Admin --> UC_Cancel : whitelist\n(опционально)
+
+WebUser --> UC_WebHub
+WebUser --> UC_WebSession
+WebUser --> UC_WebConfig
+UC_WebHub ..> UC_Redis : hub / lobbies
+UC_WebSession ..> UC_Redis : snapshot\nсессии
+UC_WebConfig ..> UC_Redis : настройки\nлобби
+
+note right of UC_WebSession
+  HTTP API /api/webapp/* и
+  WS /ws/webapp/session для
+  обновления ленты партии.
+end note
+
+note right of UC_AI
+  LLM (OpenRouter / Ollama и т.п.);
+  JSON target_id; при ошибке —
+  эвристика / fallback.
+end note
+
+@enduml

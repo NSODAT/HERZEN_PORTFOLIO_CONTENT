@@ -1,0 +1,6 @@
+ЛР1: https://github.com/NSODAT/ML_LR1
+ЛР2: https://github.com/NSODAT/ML_LR2
+ЛР3: https://github.com/NSODAT/ML3
+ЛР4: https://github.com/NSODAT/ML4
+ПРАКТ1: https://github.com/NSODAT/MLPRACT1
+ЛР9: https://github.com/NSODAT/ML9

@@ -1,0 +1,40 @@
+@startuml VKR_Sequence_StartNight
+!theme plain
+autonumber
+
+actor "Организатор\n(Telegram)" as Org
+actor "Игрок\n(Mini App)" as Web
+participant "Telegram API" as TG
+participant "Handler\n(group)" as H
+participant "HTTP\n/api/webapp" as API
+participant "GameFlow\nService" as GF
+participant "Redis\nSession" as R
+participant "SQL\nRepository" as DB
+participant "Engine\nresolve_night" as ENG
+participant "LLM" as LLM
+
+Org -> TG : /mafia_begin N
+TG -> H : update
+H -> GF : start_game(chat_id, ...)
+GF -> DB : create Game, GamePlayers
+GF -> R : save GameSessionState\nphase=night
+GF -> TG : сообщение группе:\n«Ночь 1»
+
+== Mini App: обновление сессии ==
+Web -> API : GET /api/webapp/session\n(+ initData)
+API -> R : read GameSessionState
+API --> Web : JSON snapshot
+Web -> API : WebSocket\n/ws/webapp/session
+API -> Web : session.snapshot\n(пуши при смене фазы)
+
+== Ночь: ход ИИ ==
+GF -> GF : night_subphase := первый шаг
+GF -> LLM : ai_player_decision\n(роль, кандидаты, контекст)
+LLM --> GF : JSON {target_id}
+GF -> R : обновить голоса/цели
+GF -> ENG : resolve_night(...)
+ENG --> GF : NightResult
+GF -> DB : обновить alive, сообщения
+GF -> TG : итог рассвета
+
+@enduml
